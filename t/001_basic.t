@@ -6,6 +6,8 @@ use Test::Flatten;
 use Test::Fluentd;
 
 my $output_dir = "./tmp/";
+mkdir $output_dir;
+mkdir "log";
 subtest 'test_from_file_fluent.conf'=> sub {
     my $input_file = $output_dir . 'input.txt';
     my $output_file = $output_dir . 'file_output.txt';

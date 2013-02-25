@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use Class::Accessor::Lite;
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 my %DEFAULTS = (
     options                         => undef,
@@ -16,6 +16,7 @@ my %DEFAULTS = (
     interval_time_after_start       => 3 ,
     interval_time_before_shutdown   => 3 ,
     interval_time_after_shutdown    => 3 ,
+    fluent_path                     => undef,
     pid                             => undef,
 );
 
@@ -23,14 +24,29 @@ Class::Accessor::Lite->mk_accessors(keys %DEFAULTS);
 
 sub new {
     my $class = shift;
-    bless {
+    my $self = bless {
         %DEFAULTS,
         @_ == 1 ? %{ $_[0] } : @_,
     }, $class;
+    $self->_check_fluent_path;
+    $self;
+}
+
+sub _check_fluent_path{
+    my $self = shift;
+    my $fluent_path = $self->fluent_path;
+    unless($fluent_path){ 
+        $fluent_path = `which fluentd`;
+        chomp($fluent_path);
+        $self->fluent_path($fluent_path);
+    }
+    die 'Install fluentd' unless $fluent_path;
+    die 'Add Permission' unless -x $fluent_path;
 }
 
 sub run{
     my ($self)  = @_;
+    $self->_check_fluent_path;
     my $fluent_conf_dir = $self->get_log_file('fluent_conf_file');
     if($self->fluent_conf){
         die 'exists fluent conf!' if -f $fluent_conf_dir;
@@ -53,7 +69,7 @@ sub run{
     if($pid == 0){
         open STDOUT, '>&', $logfh or die "dup(2) failed:$!";
         open STDERR, '>&', $logfh or die "dup(2) failed:$!";
-        exec('fluentd -c ' . $fluent_conf_dir);
+        exec($self->fluent_path . ' -c ' . $fluent_conf_dir);
         exit;
     }else{
         open STDOUT, '>&', $outputfh or die "dup(2) failed:$!";
@@ -78,7 +94,7 @@ sub stop{
 
     if($self->fluent_conf){
         my $fluent_conf_dir = $self->get_log_file('fluent_conf_file');
-        system "rm $fluent_conf_dir";
+        unlink $fluent_conf_dir;
     }
 }
 
@@ -94,7 +110,7 @@ sub get_log_file{
 sub remove_input_txt{
     my ($self)  = @_;
     my $input_txt = $self->get_log_file('input_txt');
-    system "rm $input_txt";
+    unlink $input_txt;
 }
 
 sub DESTROY {
