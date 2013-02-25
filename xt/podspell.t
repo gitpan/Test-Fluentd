@@ -19,7 +19,7 @@ all_pod_files_spelling_ok('lib');
 __DATA__
 <<YOUR NAME HERE>>
 <<YOUR EMAIL ADDRESS HERE>>
-Test::fluentd
+Test::Fluentd
 
 # computer terms
 API
