@@ -11,6 +11,7 @@ BEGIN {
         Module::Install::Repository      0.06
         Test::Requires                   0.06
         Test::Flatten                    0
+        Class::Accessor::Lite            0
     );
     my @not_available;
     while(my($mod, $ver) = splice @devmods, 0, 2) {
